@@ -9,6 +9,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
 
 @Module({
   imports: [
@@ -31,5 +33,7 @@ import { WalletModule } from './wallet/wallet.module.js';
     }),
     WalletModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
