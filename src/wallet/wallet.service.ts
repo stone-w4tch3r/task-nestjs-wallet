@@ -1,6 +1,6 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, DataSource } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Wallet } from '../entities/wallet.entity';
 import { DailyLimit } from '../entities/daily-limit.entity';
 import { Transaction, TransactionType } from '../entities/transaction.entity';
@@ -23,14 +23,19 @@ export class WalletService {
     private dataSource: DataSource,
   ) {}
 
-  async topup(dto: TopupDto): Promise<{ success: boolean; newBalance: number }> {
+  async topup(
+    dto: TopupDto,
+  ): Promise<{ success: boolean; newBalance: number }> {
     return this.dataSource.transaction(async (manager) => {
       const idempotencyLog = await manager.findOne(IdempotencyLog, {
         where: { key: dto.idempotencyKey },
       });
 
       if (idempotencyLog) {
-        return idempotencyLog.response as { success: boolean; newBalance: number };
+        return idempotencyLog.response as {
+          success: boolean;
+          newBalance: number;
+        };
       }
 
       let wallet = await manager.findOne(Wallet, {
@@ -69,14 +74,19 @@ export class WalletService {
     });
   }
 
-  async charge(dto: ChargeDto): Promise<{ success: boolean; newBalance: number }> {
+  async charge(
+    dto: ChargeDto,
+  ): Promise<{ success: boolean; newBalance: number }> {
     return this.dataSource.transaction(async (manager) => {
       const idempotencyLog = await manager.findOne(IdempotencyLog, {
         where: { key: dto.idempotencyKey },
       });
 
       if (idempotencyLog) {
-        return idempotencyLog.response as { success: boolean; newBalance: number };
+        return idempotencyLog.response as {
+          success: boolean;
+          newBalance: number;
+        };
       }
 
       const wallet = await manager.findOne(Wallet, {
@@ -147,7 +157,9 @@ export class WalletService {
     });
   }
 
-  async getBalance(userId: string): Promise<{ userId: string; balance: number; transactions: unknown[] }> {
+  async getBalance(
+    userId: string,
+  ): Promise<{ userId: string; balance: number; transactions: unknown[] }> {
     const wallet = await this.walletRepository.findOne({
       where: { userId },
     });
