@@ -10,6 +10,8 @@ COPY . .
 
 RUN npm run build
 
+RUN cp -r src/frontend dist/frontend
+
 FROM node:20-alpine
 
 WORKDIR /app

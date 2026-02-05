@@ -11,21 +11,23 @@ Contains transaction-safe electronic wallet API with idempotency and daily spend
 - **Balance**: View balance and last 10 transactions
 - **Idempotency**: Safe retry of operations
 - **Concurrency control**: Pessimistic locking prevents race conditions
+- **Web UI Tester**: Interactive frontend for testing with verbose debugging
 
 ## Tech Stack
 
-- Nest.js + TypeScript
-- TypeORM + PostgreSQL
-- Docker Compose
+- **Backend**: Nest.js + TypeScript
+- **Database**: PostgreSQL with TypeORM
+- **Frontend**: Static HTML/JS (nginx:alpine)
+- **Orchestration**: Docker Compose
 
 ## Quick Start
 
 ```bash
-# Start PostgreSQL, application, and frontend
+# Start PostgreSQL and application
 docker-compose up -d
 
-# Access web UI tester
-open http://localhost:8080
+# Access web UI tester (same as app root)
+open http://localhost:3000
 
 # Test the API via curl
 curl -X POST http://localhost:3000/wallet/topup \
@@ -41,7 +43,7 @@ docker-compose down
 
 ### Web UI Tester
 
-A simple HTML frontend is available at **http://localhost:8080** after running `docker-compose up -d`.
+A simple HTML frontend is served from the NestJS application at **http://localhost:3000** after running `docker-compose up -d`.
 
 Features:
 
@@ -49,6 +51,7 @@ Features:
 - Verbose debugging output with request/response details
 - Network error troubleshooting tips
 - Stateless design - no client-side storage
+- Same-origin requests (no CORS needed)
 
 ## Development
 

@@ -183,24 +183,14 @@
       </div>
     </div>
 
-    <div class="section">
-      <h2>💳 Charge Wallet</h2>
-      <label>User ID:</label>
-      <input type="text" id="chargeUserId" placeholder="test-user-1" />
-      <label>Amount:</label>
-      <input type="number" id="chargeAmount" placeholder="500" value="500" />
-      <label>Idempotency Key:</label>
-      <input type="text" id="chargeIdempotencyKey" placeholder="charge-1" />
-      <label>Reason (optional):</label>
-      <input type="text" id="chargeReason" placeholder="Payment for service" />
-      <p class="help-text">
-        Daily limit: 10,000. Try charging more to see the limit error.
-      </p>
-      <button onclick="charge()">Charge Wallet</button>
-      <div id="chargeDebug" class="debug" style="display: none">
-        <h3>🔍 Debug Output</h3>
-        <pre id="chargeOutput"></pre>
-      </div>
+  <div class="section">
+    <h2>⚙️ Configuration</h2>
+    <label>API Base URL:</label>
+    <input type="text" id="apiUrl" value="" placeholder="Empty for same-origin">
+    <p class="help-text">Leave empty for same-origin requests (recommended). Use full URL only for cross-origin testing.</p>
+    <label>User ID (default for all operations):</label>
+    <input type="text" id="defaultUserId" value="test-user-1" placeholder="test-user-1">
+  </div>
     </div>
 
     <div class="section">
@@ -216,7 +206,10 @@
     </div>
 
     <script>
-      const API_URL = () => document.getElementById('apiUrl').value;
+      const API_URL = () => {
+        const url = document.getElementById('apiUrl').value;
+        return url ? url : '';
+      };
       const DEFAULT_USER_ID = () =>
         document.getElementById('defaultUserId').value;
 

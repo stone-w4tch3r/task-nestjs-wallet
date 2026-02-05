@@ -1,9 +1,11 @@
 # Wallet Service - 10-Minute Manual Test Plan
 
 ## Overview
+
 This test plan covers main scenarios and edge cases for the wallet service API.
 
 ## Setup
+
 ```bash
 # Start services
 docker-compose up -d
@@ -15,56 +17,89 @@ docker-compose ps
 curl http://localhost:3000/  # Should return 404 (normal)
 ```
 
+## Testing Options
+
+### Option 1: Web UI Tester (Recommended)
+
+Open **http://localhost:3000** in your browser for an interactive testing interface.
+
+Advantages:
+
+- Visual forms for all operations
+- Verbose debugging output (timestamps, headers, payloads)
+- Network error troubleshooting
+- Easy idempotency testing
+
+### Option 2: cURL Commands
+
+Follow the manual test steps below using curl commands.
+
 ---
 
 ## Test 1: Basic Wallet Operations (2 minutes)
 
+**Web UI Alternative**: Use the forms at http://localhost:3000 - each section corresponds to a test below.
+
 ### 1.1 Create wallet via topup
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 1000, "idempotencyKey": "test1"}'
 ```
+
 **Expected:** `{"success":true,"newBalance":1000}`
 
 ### 1.2 Check balance
+
 ```bash
 curl http://localhost:3000/wallet/balance?userId=test-user
 ```
+
 **Expected:** JSON with `balance: 1000` and `transactions` array with 1 entry
 
 ### 1.3 Charge wallet
+
 ```bash
 curl -X POST http://localhost:3000/wallet/charge \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 200, "idempotencyKey": "test2", "reason": "Coffee"}'
 ```
+
 **Expected:** `{"success":true,"newBalance":800}`
 
 ### 1.4 Verify balance updated
+
 ```bash
 curl http://localhost:3000/wallet/balance?userId=test-user
 ```
+
 **Expected:** `balance: 800`, transactions count: 2
 
 ---
 
 ## Test 2: Idempotency (1 minute)
 
+**Web UI Alternative**: Use the same `idempotencyKey` multiple times in the Topup or Charge forms. Watch the debug output to see the idempotency in action.
+
 ### 2.1 Duplicate topup
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 5000, "idempotencyKey": "test1"}'
 ```
+
 **Expected:** `{"success":true,"newBalance":1000}` (balance NOT changed)
 
 ### 2.2 Duplicate charge
+
 ```bash
 curl -X POST http://localhost:3000/wallet/charge \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 1000, "idempotencyKey": "test2", "reason": "Duplicate"}'
 ```
+
 **Expected:** `{"success":true,"newBalance":800}` (balance NOT changed)
 
 **Verify:** Balance should still be 800
@@ -73,15 +108,24 @@ curl -X POST http://localhost:3000/wallet/charge \
 
 ## Test 3: Business Rules (2 minutes)
 
+**Web UI Alternative**:
+
+- Try charging more than available balance to see `INSUFFICIENT_FUNDS`
+- Try charging more than 10,000 total to see `LIMIT_EXCEEDED`
+- Use a new user ID to test non-existent wallet errors
+
 ### 3.1 Insufficient funds
+
 ```bash
 curl -X POST http://localhost:3000/wallet/charge \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 10000, "idempotencyKey": "test3", "reason": "Too much"}'
 ```
+
 **Expected:** Error with `INSUFFICIENT_FUNDS`
 
 ### 3.2 Daily limit enforcement
+
 ```bash
 # Try to charge over 10000 total for the day
 for i in {1..15}; do
@@ -91,12 +135,15 @@ for i in {1..15}; do
   echo ""
 done
 ```
+
 **Expected:** Charges succeed until daily spent + amount > 10000, then `LIMIT_EXCEEDED`
 
 ### 3.3 Non-existent wallet
+
 ```bash
 curl http://localhost:3000/wallet/balance?userId=nonexistent
 ```
+
 **Expected:** Error with `Wallet not found`
 
 ```bash
@@ -104,13 +151,17 @@ curl -X POST http://localhost:3000/wallet/charge \
   -H "Content-Type: application/json" \
   -d '{"userId": "nonexistent", "amount": 100, "idempotencyKey": "test4", "reason": "Test"}'
 ```
+
 **Expected:** Error with `Wallet not found`
 
 ---
 
 ## Test 4: Concurrency & Race Conditions (2 minutes)
 
+**Web UI Alternative**: For a simplified concurrent test, open multiple browser tabs and rapidly submit the same operation. Use the same `idempotencyKey` to test idempotency, or different keys to test locking. For full concurrency testing, use the curl commands below.
+
 ### 4.1 Concurrent identical requests (idempotency stress test)
+
 ```bash
 # Send 10 identical topup requests simultaneously
 for i in {1..10}; do
@@ -123,9 +174,11 @@ wait
 # Check balance - should only have 100, not 1000
 curl http://localhost:3000/wallet/balance?userId=concurrent-user
 ```
+
 **Expected:** Balance = 100 (idempotency prevented duplicates)
 
 ### 4.2 Concurrent different requests (pessimistic locking)
+
 ```bash
 # Setup user with 1000 balance
 curl -X POST http://localhost:3000/wallet/topup \
@@ -143,9 +196,11 @@ wait
 # Check final balance
 curl http://localhost:3000/wallet/balance?userId=race-user
 ```
+
 **Expected:** Balance >= 0 (no negative balance), all successful charges reflected correctly
 
 ### 4.3 Daily limit race condition
+
 ```bash
 # Setup user with 5000 balance
 curl -X POST http://localhost:3000/wallet/topup \
@@ -163,6 +218,7 @@ wait
 # Check balance and verify no over-limit charges
 curl http://localhost:3000/wallet/balance?userId=limit-user
 ```
+
 **Expected:** Daily limit enforced correctly, no race condition bypass
 
 ---
@@ -170,35 +226,43 @@ curl http://localhost:3000/wallet/balance?userId=limit-user
 ## Test 5: Input Validation (1 minute)
 
 ### 5.1 Negative amount (topup)
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": -100, "idempotencyKey": "test5"}'
 ```
+
 **Expected:** Validation error
 
 ### 5.2 Zero amount
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 0, "idempotencyKey": "test6"}'
 ```
+
 **Expected:** Validation error
 
 ### 5.3 Missing required fields
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "idempotencyKey": "test7"}'
 ```
+
 **Expected:** Validation error (missing amount)
 
 ### 5.4 Invalid JSON
+
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user", "amount": 100'
 ```
+
 **Expected:** 400 Bad Request / JSON parse error
 
 ---
@@ -206,6 +270,7 @@ curl -X POST http://localhost:3000/wallet/topup \
 ## Test 6: Database Failure Scenarios (1 minute)
 
 ### 6.1 Restart database mid-operation
+
 ```bash
 # In one terminal, start a long-running operation (background)
 curl -X POST http://localhost:3000/wallet/topup \
@@ -221,9 +286,11 @@ sleep 10
 # Check if operation was atomic (either succeeded or failed cleanly)
 curl http://localhost:3000/wallet/balance?userId=db-test-user
 ```
+
 **Expected:** Either balance updated or not (atomic operation), no partial state
 
 ### 6.2 Check database consistency
+
 ```bash
 # Access database directly
 docker exec -it wallet-postgres psql -U wallet -d wallet -c "SELECT COUNT(*) FROM transactions;"
@@ -234,9 +301,11 @@ docker exec -it wallet-postgres psql -U wallet -d wallet -c "SELECT * FROM trans
 # Check idempotency logs
 docker exec -it wallet-postgres psql -U wallet -d wallet -c "SELECT * FROM idempotency_logs LIMIT 5;"
 ```
+
 **Expected:** All records are consistent, no orphaned transactions
 
 ### 6.3 Transaction rollback verification
+
 ```bash
 # This should fail due to insufficient funds, verify no partial writes
 curl -X POST http://localhost:3000/wallet/charge \
@@ -249,6 +318,7 @@ curl http://localhost:3000/wallet/balance?userId=test-user
 # Check database - no transaction should be recorded for failed charge
 docker exec -it wallet-postgres psql -U wallet -d wallet -c "SELECT COUNT(*) FROM transactions WHERE reason = 'Test rollback';"
 ```
+
 **Expected:** Balance unchanged, no failed transaction in database
 
 ---
@@ -256,6 +326,7 @@ docker exec -it wallet-postgres psql -U wallet -d wallet -c "SELECT COUNT(*) FRO
 ## Test 7: Edge Cases (1 minute)
 
 ### 7.1 Very large amounts
+
 ```bash
 # Add large amount
 curl -X POST http://localhost:3000/wallet/topup \
@@ -265,9 +336,11 @@ curl -X POST http://localhost:3000/wallet/topup \
 # Check balance
 curl http://localhost:3000/wallet/balance?userId=large-user
 ```
+
 **Expected:** Large amount handled correctly (within decimal precision limits)
 
 ### 7.2 Multiple users
+
 ```bash
 # Create wallet for user1
 curl -X POST http://localhost:3000/wallet/topup \
@@ -283,9 +356,11 @@ curl -X POST http://localhost:3000/wallet/topup \
 curl http://localhost:3000/wallet/balance?userId=user1
 curl http://localhost:3000/wallet/balance?userId=user2
 ```
+
 **Expected:** Each user has independent balance
 
 ### 7.3 Transaction history limit
+
 ```bash
 # Create 15 transactions for a user
 for i in {1..15}; do
@@ -298,9 +373,52 @@ wait
 # Check balance - should show only last 10 transactions
 curl http://localhost:3000/wallet/balance?userId=history-user | grep -o '"id"' | wc -l
 ```
+
 **Expected:** Balance = 150, transactions count = 10 (limit applied)
 
 ---
+
+## Using the Web UI for Testing
+
+### Quick Workflow
+
+1. Open http://localhost:3000
+2. Configure API URL (leave empty for same-origin requests)
+3. Set default User ID (e.g., `test-user`)
+4. Use forms to test operations
+5. Review debug output for detailed information
+
+### Debug Output Explained
+
+The web UI provides verbose debugging including:
+
+- **Timestamps**: When each request started/completed
+- **HTTP Status**: Response codes and status text
+- **Response Time**: Milliseconds for API round-trip
+- **Request Headers**: All headers sent to the API
+- **Response Headers**: Headers received from API
+- **Request/Response Body**: Full JSON payloads
+- **Error Stack Traces**: Detailed error information
+
+### Testing Idempotency via Web UI
+
+1. Submit a topup with `idempotencyKey: "test-1"` and amount 1000
+2. Check balance - should show 1000
+3. Submit another topup with same `idempotencyKey` and different amount (e.g., 5000)
+4. Check balance - should still be 1000 (idempotency prevented duplicate)
+
+### Testing Business Rules via Web UI
+
+1. **Insufficient Funds**: Topup 100, then try to charge 1000
+2. **Daily Limit**: Topup 15000, then charge 5001 (limit is 10000)
+3. **Validation**: Leave fields empty, use negative amounts, or zero
+
+### Web UI Tips
+
+- Use browser tabs to test multiple users simultaneously
+- Check browser console (F12) for additional JavaScript errors
+- Use "Clear Output" button to clean up before new tests
+- Save your test cases by copying the `idempotencyKey` values
 
 ## Cleanup
 
@@ -338,7 +456,7 @@ docker exec -it wallet-postgres psql -U wallet -d wallet -c "\dt"
 
 ## Success Criteria
 
-- [ ] All basic operations work (topup, charge, balance)
+- [ ] All basic operations work (topup, charge, balance) - via Web UI or curl
 - [ ] Idempotency prevents duplicate operations
 - [ ] Insufficient funds correctly rejected
 - [ ] Daily limit enforced (10000)
@@ -348,3 +466,5 @@ docker exec -it wallet-postgres psql -U wallet -d wallet -c "\dt"
 - [ ] Input validation works
 - [ ] Multiple users have separate wallets
 - [ ] Transaction history limited to 10
+- [ ] Web UI displays verbose debug information
+- [ ] Network errors are properly reported with troubleshooting tips
