@@ -17,5 +17,26 @@ services:
       timeout: 5s
       retries: 5
 
+  wallet:
+    build: .
+    container_name: wallet-service
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: wallet
+      DB_PASSWORD: wallet123
+      DB_DATABASE: wallet
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/wallet/balance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 volumes:
   postgres-data:
