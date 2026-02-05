@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet API Tester</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Courier New', monospace;
+        background: #1a1a1a;
+        color: #e0e0e0;
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #4caf50;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4caf50;
+        padding-bottom: 10px;
+      }
+      .section {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .section h2 {
+        color: #ffa726;
+        margin-bottom: 15px;
+        font-size: 18px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #81c784;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        background: #333;
+        border: 1px solid #555;
+        color: #fff;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      button:hover {
+        background: #45a049;
+      }
+      button:disabled {
+        background: #666;
+        cursor: not-allowed;
+      }
+      .debug {
+        background: #1e1e1e;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 15px;
+        margin-top: 15px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .debug h3 {
+        color: #ffc107;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+      .debug pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .success {
+        color: #4caf50;
+      }
+      .error {
+        color: #f44336;
+      }
+      .info {
+        color: #2196f3;
+      }
+      .timestamp {
+        color: #9e9e9e;
+        font-size: 11px;
+      }
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+      .status-success {
+        background: #2e7d32;
+        color: white;
+      }
+      .status-error {
+        background: #c62828;
+        color: white;
+      }
+      .status-pending {
+        background: #f57f17;
+        color: white;
+      }
+      .help-text {
+        color: #888;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 15px;
+      }
+      .clear-btn {
+        background: #666;
+        margin-left: 10px;
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>💼 Wallet API Tester</h1>
+
+    <div class="section">
+      <h2>⚙️ Configuration</h2>
+      <label>API Base URL:</label>
+      <input
+        type="text"
+        id="apiUrl"
+        value="http://localhost:3000"
+        placeholder="http://localhost:3000"
+      />
+      <label>User ID (default for all operations):</label>
+      <input
+        type="text"
+        id="defaultUserId"
+        value="test-user-1"
+        placeholder="test-user-1"
+      />
+    </div>
+
+    <div class="section">
+      <h2>💰 Topup Wallet</h2>
+      <label>User ID:</label>
+      <input type="text" id="topupUserId" placeholder="test-user-1" />
+      <label>Amount:</label>
+      <input type="number" id="topupAmount" placeholder="1000" value="1000" />
+      <label>Idempotency Key:</label>
+      <input type="text" id="topupIdempotencyKey" placeholder="topup-1" />
+      <p class="help-text">
+        Tip: Use the same key to test idempotency - duplicate requests will be
+        safe.
+      </p>
+      <button onclick="topup()">Topup Wallet</button>
+      <div id="topupDebug" class="debug" style="display: none">
+        <h3>🔍 Debug Output</h3>
+        <pre id="topupOutput"></pre>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>💳 Charge Wallet</h2>
+      <label>User ID:</label>
+      <input type="text" id="chargeUserId" placeholder="test-user-1" />
+      <label>Amount:</label>
+      <input type="number" id="chargeAmount" placeholder="500" value="500" />
+      <label>Idempotency Key:</label>
+      <input type="text" id="chargeIdempotencyKey" placeholder="charge-1" />
+      <label>Reason (optional):</label>
+      <input type="text" id="chargeReason" placeholder="Payment for service" />
+      <p class="help-text">
+        Daily limit: 10,000. Try charging more to see the limit error.
+      </p>
+      <button onclick="charge()">Charge Wallet</button>
+      <div id="chargeDebug" class="debug" style="display: none">
+        <h3>🔍 Debug Output</h3>
+        <pre id="chargeOutput"></pre>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📊 Get Balance</h2>
+      <label>User ID:</label>
+      <input type="text" id="balanceUserId" placeholder="test-user-1" />
+      <button onclick="getBalance()">Get Balance</button>
+      <button class="clear-btn" onclick="clearBalance()">Clear Output</button>
+      <div id="balanceDebug" class="debug" style="display: none">
+        <h3>🔍 Debug Output</h3>
+        <pre id="balanceOutput"></pre>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = () => document.getElementById('apiUrl').value;
+      const DEFAULT_USER_ID = () =>
+        document.getElementById('defaultUserId').value;
+
+      function log(elementId, message, type = 'info') {
+        const output = document.getElementById(elementId);
+        const timestamp = new Date().toISOString();
+        const prefix =
+          type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+        const cssClass =
+          type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+        output.innerHTML += `<span class="timestamp">[${timestamp}]</span> <span class="${cssClass}">${prefix} ${message}</span>\n`;
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function clearLog(elementId) {
+        document.getElementById(elementId).innerHTML = '';
+      }
+
+      function showDebug(section) {
+        document.getElementById(section + 'Debug').style.display = 'block';
+      }
+
+      async function makeRequest(method, endpoint, body = null, outputId) {
+        const url = `${API_URL()}${endpoint}`;
+        clearLog(outputId);
+        log(outputId, `Starting ${method} ${endpoint}`, 'info');
+        log(outputId, `Full URL: ${url}`, 'info');
+
+        if (body) {
+          log(
+            outputId,
+            `Request Body: ${JSON.stringify(body, null, 2)}`,
+            'info',
+          );
+        }
+
+        const startTime = performance.now();
+
+        try {
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : null,
+          });
+
+          const endTime = performance.now();
+          const duration = (endTime - startTime).toFixed(2);
+
+          log(
+            outputId,
+            `Response Status: ${response.status} ${response.statusText}`,
+            response.ok ? 'success' : 'error',
+          );
+          log(outputId, `Response Time: ${duration}ms`, 'info');
+          log(outputId, `Response Headers:`, 'info');
+
+          response.headers.forEach((value, key) => {
+            log(outputId, `  ${key}: ${value}`, 'info');
+          });
+
+          const contentType = response.headers.get('content-type');
+          let data;
+
+          if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+            log(
+              outputId,
+              `Response Body: ${JSON.stringify(data, null, 2)}`,
+              response.ok ? 'success' : 'error',
+            );
+          } else {
+            data = await response.text();
+            log(
+              outputId,
+              `Response Body: ${data}`,
+              response.ok ? 'success' : 'error',
+            );
+          }
+
+          return { success: response.ok, data, status: response.status };
+        } catch (error) {
+          const endTime = performance.now();
+          const duration = (endTime - startTime).toFixed(2);
+
+          log(outputId, `Request Failed after ${duration}ms`, 'error');
+          log(outputId, `Error: ${error.message}`, 'error');
+          log(outputId, `Stack Trace: ${error.stack}`, 'error');
+
+          if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            log(
+              outputId,
+              `Network Error: Check if API is running at ${API_URL()}`,
+              'error',
+            );
+            log(outputId, `Troubleshooting:`, 'error');
+            log(
+              outputId,
+              `  1. Run 'docker-compose up -d' to start the service`,
+              'error',
+            );
+            log(
+              outputId,
+              `  2. Check 'docker-compose ps' to verify services are running`,
+              'error',
+            );
+            log(outputId, `  3. Verify the API URL is correct`, 'error');
+          }
+
+          return { success: false, data: null, error };
+        }
+      }
+
+      async function topup() {
+        const userId =
+          document.getElementById('topupUserId').value || DEFAULT_USER_ID();
+        const amount = parseFloat(document.getElementById('topupAmount').value);
+        const idempotencyKey = document.getElementById(
+          'topupIdempotencyKey',
+        ).value;
+
+        if (!userId || !amount || !idempotencyKey) {
+          log(
+            'topupOutput',
+            'Missing required fields: userId, amount, idempotencyKey',
+            'error',
+          );
+          showDebug('topup');
+          return;
+        }
+
+        const body = { userId, amount, idempotencyKey };
+        showDebug('topup');
+        await makeRequest('POST', '/wallet/topup', body, 'topupOutput');
+      }
+
+      async function charge() {
+        const userId =
+          document.getElementById('chargeUserId').value || DEFAULT_USER_ID();
+        const amount = parseFloat(
+          document.getElementById('chargeAmount').value,
+        );
+        const idempotencyKey = document.getElementById(
+          'chargeIdempotencyKey',
+        ).value;
+        const reason = document.getElementById('chargeReason').value;
+
+        if (!userId || !amount || !idempotencyKey) {
+          log(
+            'chargeOutput',
+            'Missing required fields: userId, amount, idempotencyKey',
+            'error',
+          );
+          showDebug('charge');
+          return;
+        }
+
+        const body = { userId, amount, idempotencyKey };
+        if (reason) body.reason = reason;
+
+        showDebug('charge');
+        await makeRequest('POST', '/wallet/charge', body, 'chargeOutput');
+      }
+
+      async function getBalance() {
+        const userId =
+          document.getElementById('balanceUserId').value || DEFAULT_USER_ID();
+
+        if (!userId) {
+          log('balanceOutput', 'Missing required field: userId', 'error');
+          showDebug('balance');
+          return;
+        }
+
+        showDebug('balance');
+        const endpoint = `/wallet/balance?userId=${encodeURIComponent(userId)}`;
+        await makeRequest('GET', endpoint, null, 'balanceOutput');
+      }
+
+      function clearBalance() {
+        clearLog('balanceOutput');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('topupUserId').addEventListener('focus', () => {
+          if (!this.value) this.value = DEFAULT_USER_ID();
+        });
+        document
+          .getElementById('chargeUserId')
+          .addEventListener('focus', () => {
+            if (!this.value) this.value = DEFAULT_USER_ID();
+          });
+        document
+          .getElementById('balanceUserId')
+          .addEventListener('focus', () => {
+            if (!this.value) this.value = DEFAULT_USER_ID();
+          });
+      });
+    </script>
+  </body>
+</html>
