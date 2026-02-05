@@ -9,10 +9,18 @@ import {
 import { WalletService } from './wallet.service.js';
 import { TopupDto } from './dto/topup.dto.js';
 import { ChargeDto } from './dto/charge.dto.js';
+import { CreateWalletDto } from './dto/create-wallet.dto.js';
 
 @Controller('wallet')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
+
+  @Post('create')
+  async createWallet(
+    @Body(new ValidationPipe({ transform: true })) dto: CreateWalletDto,
+  ) {
+    return this.walletService.createWallet(dto);
+  }
 
   @Post('topup')
   async topup(@Body(new ValidationPipe({ transform: true })) dto: TopupDto) {

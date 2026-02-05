@@ -10,6 +10,7 @@ import {
 import { IdempotencyLog } from '../entities/idempotency-log.entity.js';
 import { TopupDto } from './dto/topup.dto.js';
 import { ChargeDto } from './dto/charge.dto.js';
+import { CreateWalletDto } from './dto/create-wallet.dto.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const DAILY_LIMIT = 10000;
@@ -26,6 +27,54 @@ export class WalletService {
     private dataSource: DataSource,
   ) {}
 
+  async createWallet(
+    dto: CreateWalletDto,
+  ): Promise<{ success: boolean; userId: string; balance: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      const idempotencyLog = await manager.findOne(IdempotencyLog, {
+        where: { key: dto.idempotencyKey },
+      });
+
+      if (idempotencyLog) {
+        return idempotencyLog.response as {
+          success: boolean;
+          userId: string;
+          balance: number;
+        };
+      }
+
+      const existingWallet = await manager.findOne(Wallet, {
+        where: { userId: dto.userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (existingWallet) {
+        throw new BadRequestException('Wallet already exists');
+      }
+
+      const wallet = manager.create(Wallet, {
+        id: uuidv4(),
+        userId: dto.userId,
+        balance: 0,
+      });
+      await manager.save(wallet);
+
+      const response = {
+        success: true,
+        userId: wallet.userId,
+        balance: Number(wallet.balance),
+      };
+
+      const idempotencyEntry = manager.create(IdempotencyLog, {
+        key: dto.idempotencyKey,
+        response,
+      });
+      await manager.save(idempotencyEntry);
+
+      return response;
+    });
+  }
+
   async topup(
     dto: TopupDto,
   ): Promise<{ success: boolean; newBalance: number }> {
@@ -41,17 +90,13 @@ export class WalletService {
         };
       }
 
-      let wallet = await manager.findOne(Wallet, {
+      const wallet = await manager.findOne(Wallet, {
         where: { userId: dto.userId },
         lock: { mode: 'pessimistic_write' },
       });
 
       if (!wallet) {
-        wallet = manager.create(Wallet, {
-          id: uuidv4(),
-          userId: dto.userId,
-          balance: 0,
-        });
+        throw new BadRequestException('Wallet not found');
       }
 
       const currentBalance = Number(wallet.balance);
@@ -185,5 +230,15 @@ export class WalletService {
       balance: Number(wallet.balance),
       transactions,
     };
+  }
+
+  async resetDb(): Promise<{ success: boolean }> {
+    return this.dataSource.transaction(async (manager) => {
+      await manager.query(
+        'TRUNCATE TABLE "transactions", "daily_limits", "idempotency_logs", "wallets" CASCADE',
+      );
+
+      return { success: true };
+    });
   }
 }

@@ -13,5 +13,6 @@ import { IdempotencyLog } from '../entities/idempotency-log.entity.js';
   ],
   controllers: [WalletController],
   providers: [WalletService],
+  exports: [WalletService],
 })
 export class WalletModule {}

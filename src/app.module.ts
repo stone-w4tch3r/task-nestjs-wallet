@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
+import { AdminModule } from './admin/admin.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
@@ -32,6 +33,7 @@ import { AppService } from './app.service.js';
       logging: false,
     }),
     WalletModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

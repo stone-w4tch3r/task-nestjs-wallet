@@ -6,11 +6,13 @@ Contains transaction-safe electronic wallet API with idempotency and daily spend
 
 ## Features
 
-- **Topup**: Add funds to wallet
+- **Create wallet**: Create a wallet (must exist before topup/charge)
+- **Topup**: Add funds to wallet (wallet must exist)
 - **Charge**: Withdraw funds (with daily limit of 10,000)
 - **Balance**: View balance and last 10 transactions
 - **Idempotency**: Safe retry of operations
 - **Concurrency control**: Pessimistic locking prevents race conditions
+- **DB reset**: Admin endpoint to clear all data
 - **Web UI Tester**: Interactive frontend for testing with verbose debugging
 
 ## Tech Stack
@@ -30,12 +32,21 @@ docker-compose up -d
 open http://localhost:3000
 
 # Test the API via curl
+# Create wallet first
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "user1", "idempotencyKey": "create1"}'
+
+# Then topup
 curl -X POST http://localhost:3000/wallet/topup \
   -H "Content-Type: application/json" \
-  -d '{"userId": "user1", "amount": 1000, "idempotencyKey": "test1"}'
+  -d '{"userId": "user1", "amount": 1000, "idempotencyKey": "topup1"}'
 
 # Check balance
 curl http://localhost:3000/wallet/balance?userId=user1
+
+# Reset database (admin endpoint)
+curl -X POST http://localhost:3000/admin/db/reset
 
 # Stop services
 docker-compose down
@@ -74,9 +85,11 @@ npm run lint
 
 ## API Endpoints
 
-- `POST /wallet/topup` - Add funds
-- `POST /wallet/charge` - Withdraw funds
+- `POST /wallet/create` - Create a new wallet (required before topup/charge)
+- `POST /wallet/topup` - Add funds to existing wallet
+- `POST /wallet/charge` - Withdraw funds from existing wallet
 - `GET /wallet/balance?userId=X` - Get balance and history
+- `POST /admin/db/reset` - Clear all database tables (admin only)
 
 ## Documentation
 

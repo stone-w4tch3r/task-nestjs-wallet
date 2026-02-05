@@ -14,47 +14,67 @@
         font-family: 'Courier New', monospace;
         background: #1a1a1a;
         color: #e0e0e0;
-        padding: 20px;
-        max-width: 900px;
+        padding: 10px;
+        max-width: 1000px;
         margin: 0 auto;
       }
       h1 {
         color: #4caf50;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         border-bottom: 2px solid #4caf50;
-        padding-bottom: 10px;
+        padding-bottom: 5px;
+        font-size: 20px;
+      }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 10px;
+      }
+      .config-row {
+        display: flex;
+        gap: 10px;
+        flex: 1;
+      }
+      .config-row input {
+        flex: 1;
+        margin: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 10px;
       }
       .section {
         background: #2a2a2a;
         border: 1px solid #444;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
+        border-radius: 6px;
+        padding: 12px;
       }
       .section h2 {
         color: #ffa726;
-        margin-bottom: 15px;
-        font-size: 18px;
+        margin-bottom: 10px;
+        font-size: 14px;
       }
       label {
         display: block;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
         color: #81c784;
+        font-size: 11px;
       }
-      input,
-      select,
-      textarea {
+      input {
         width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
         background: #333;
         border: 1px solid #555;
         color: #fff;
-        border-radius: 4px;
+        border-radius: 3px;
         font-family: 'Courier New', monospace;
+        font-size: 12px;
       }
-      input:focus,
-      textarea:focus {
+      input:focus {
         outline: none;
         border-color: #4caf50;
       }
@@ -62,15 +82,22 @@
         background: #4caf50;
         color: white;
         border: none;
-        padding: 12px 24px;
+        padding: 6px 12px;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 3px;
         font-family: 'Courier New', monospace;
-        font-size: 14px;
+        font-size: 11px;
         font-weight: bold;
       }
       button:hover {
         background: #45a049;
+      }
+      button.reset-btn {
+        background: #f44336;
+        padding: 6px 16px;
+      }
+      button.reset-btn:hover {
+        background: #da190b;
       }
       button:disabled {
         background: #666;
@@ -79,22 +106,22 @@
       .debug {
         background: #1e1e1e;
         border: 1px solid #555;
-        border-radius: 4px;
-        padding: 15px;
-        margin-top: 15px;
-        max-height: 400px;
+        border-radius: 3px;
+        padding: 8px;
+        margin-top: 8px;
+        max-height: 150px;
         overflow-y: auto;
+        font-size: 10px;
       }
       .debug h3 {
         color: #ffc107;
-        margin-bottom: 10px;
-        font-size: 14px;
+        margin-bottom: 5px;
+        font-size: 11px;
       }
       .debug pre {
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-size: 12px;
-        line-height: 1.4;
+        line-height: 1.3;
       }
       .success {
         color: #4caf50;
@@ -107,112 +134,128 @@
       }
       .timestamp {
         color: #9e9e9e;
-        font-size: 11px;
-      }
-      .status {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 11px;
-        font-weight: bold;
-        margin-right: 10px;
-      }
-      .status-success {
-        background: #2e7d32;
-        color: white;
-      }
-      .status-error {
-        background: #c62828;
-        color: white;
-      }
-      .status-pending {
-        background: #f57f17;
-        color: white;
-      }
-      .help-text {
-        color: #888;
-        font-size: 12px;
-        margin-top: -10px;
-        margin-bottom: 15px;
-      }
-      .clear-btn {
-        background: #666;
-        margin-left: 10px;
-        font-size: 12px;
-        padding: 8px 16px;
+        font-size: 9px;
       }
     </style>
   </head>
   <body>
     <h1>💼 Wallet API Tester</h1>
 
-    <div class="section">
-      <h2>⚙️ Configuration</h2>
-      <label>API Base URL:</label>
-      <input
-        type="text"
-        id="apiUrl"
-        value="http://localhost:3000"
-        placeholder="http://localhost:3000"
-      />
-      <label>User ID (default for all operations):</label>
-      <input
-        type="text"
-        id="defaultUserId"
-        value="test-user-1"
-        placeholder="test-user-1"
-      />
-    </div>
-
-    <div class="section">
-      <h2>💰 Topup Wallet</h2>
-      <label>User ID:</label>
-      <input type="text" id="topupUserId" placeholder="test-user-1" />
-      <label>Amount:</label>
-      <input type="number" id="topupAmount" placeholder="1000" value="1000" />
-      <label>Idempotency Key:</label>
-      <input type="text" id="topupIdempotencyKey" placeholder="topup-1" />
-      <p class="help-text">
-        Tip: Use the same key to test idempotency - duplicate requests will be
-        safe.
-      </p>
-      <button onclick="topup()">Topup Wallet</button>
-      <div id="topupDebug" class="debug" style="display: none">
-        <h3>🔍 Debug Output</h3>
-        <pre id="topupOutput"></pre>
+    <div class="top-bar">
+      <div class="config-row">
+        <input
+          type="text"
+          id="apiUrl"
+          value="http://localhost:3000"
+          placeholder="API URL"
+          title="API Base URL"
+        />
+        <input
+          type="text"
+          id="defaultUserId"
+          value="test-user-1"
+          placeholder="Default User ID"
+          title="Default User ID"
+        />
       </div>
+      <button class="reset-btn" onclick="resetDb()">🔄 Reset All Data</button>
     </div>
 
-    <div class="section">
-      <h2>💳 Charge Wallet</h2>
-      <label>User ID:</label>
-      <input type="text" id="chargeUserId" placeholder="test-user-1" />
-      <label>Amount:</label>
-      <input type="number" id="chargeAmount" placeholder="200" value="200" />
-      <label>Idempotency Key:</label>
-      <input type="text" id="chargeIdempotencyKey" placeholder="charge-1" />
-      <label>Reason (optional):</label>
-      <input type="text" id="chargeReason" placeholder="Coffee" />
-      <p class="help-text">
-        Tip: Use the same key to test idempotency - duplicate requests will be
-        safe.
-      </p>
-      <button onclick="charge()">Charge Wallet</button>
-      <div id="chargeDebug" class="debug" style="display: none">
-        <h3>🔍 Debug Output</h3>
-        <pre id="chargeOutput"></pre>
+    <div class="grid">
+      <div class="section">
+        <h2>➕ Create Wallet</h2>
+        <label>User ID:</label>
+        <input
+          type="text"
+          id="createUserId"
+          placeholder="test-user-1"
+          value="test-user-1"
+        />
+        <label>Idempotency Key:</label>
+        <input
+          type="text"
+          id="createIdempotencyKey"
+          placeholder="create-1"
+          value="create-1"
+        />
+        <button onclick="createWallet()">Create Wallet</button>
+        <div id="createDebug" class="debug" style="display: none">
+          <h3>🔍 Output</h3>
+          <pre id="createOutput"></pre>
+        </div>
       </div>
-    </div>
 
-    <div class="section">
-      <h2>📊 Get Balance</h2>
-      <label>User ID:</label>
-      <input type="text" id="balanceUserId" placeholder="test-user-1" />
-      <button onclick="getBalance()">Get Balance</button>
-      <button class="clear-btn" onclick="clearBalance()">Clear Output</button>
-      <div id="balanceDebug" class="debug" style="display: none">
-        <h3>🔍 Debug Output</h3>
-        <pre id="balanceOutput"></pre>
+      <div class="section">
+        <h2>💰 Topup Wallet</h2>
+        <label>User ID:</label>
+        <input
+          type="text"
+          id="topupUserId"
+          placeholder="test-user-1"
+          value="test-user-1"
+        />
+        <label>Amount:</label>
+        <input type="number" id="topupAmount" placeholder="1000" value="1000" />
+        <label>Idempotency Key:</label>
+        <input
+          type="text"
+          id="topupIdempotencyKey"
+          placeholder="topup-1"
+          value="topup-1"
+        />
+        <button onclick="topup()">Topup Wallet</button>
+        <div id="topupDebug" class="debug" style="display: none">
+          <h3>🔍 Output</h3>
+          <pre id="topupOutput"></pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>💳 Charge Wallet</h2>
+        <label>User ID:</label>
+        <input
+          type="text"
+          id="chargeUserId"
+          placeholder="test-user-1"
+          value="test-user-1"
+        />
+        <label>Amount:</label>
+        <input type="number" id="chargeAmount" placeholder="200" value="200" />
+        <label>Idempotency Key:</label>
+        <input
+          type="text"
+          id="chargeIdempotencyKey"
+          placeholder="charge-1"
+          value="charge-1"
+        />
+        <label>Reason:</label>
+        <input
+          type="text"
+          id="chargeReason"
+          placeholder="Coffee"
+          value="Coffee"
+        />
+        <button onclick="charge()">Charge Wallet</button>
+        <div id="chargeDebug" class="debug" style="display: none">
+          <h3>🔍 Output</h3>
+          <pre id="chargeOutput"></pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📊 Get Balance</h2>
+        <label>User ID:</label>
+        <input
+          type="text"
+          id="balanceUserId"
+          placeholder="test-user-1"
+          value="test-user-1"
+        />
+        <button onclick="getBalance()">Get Balance</button>
+        <div id="balanceDebug" class="debug" style="display: none">
+          <h3>🔍 Output</h3>
+          <pre id="balanceOutput"></pre>
+        </div>
       </div>
     </div>
 
@@ -246,15 +289,10 @@
       async function makeRequest(method, endpoint, body = null, outputId) {
         const url = `${API_URL()}${endpoint}`;
         clearLog(outputId);
-        log(outputId, `Starting ${method} ${endpoint}`, 'info');
-        log(outputId, `Full URL: ${url}`, 'info');
+        log(outputId, `${method} ${endpoint}`, 'info');
 
         if (body) {
-          log(
-            outputId,
-            `Request Body: ${JSON.stringify(body, null, 2)}`,
-            'info',
-          );
+          log(outputId, `Body: ${JSON.stringify(body, null, 2)}`, 'info');
         }
 
         const startTime = performance.now();
@@ -273,15 +311,10 @@
 
           log(
             outputId,
-            `Response Status: ${response.status} ${response.statusText}`,
+            `${response.status} ${response.statusText}`,
             response.ok ? 'success' : 'error',
           );
-          log(outputId, `Response Time: ${duration}ms`, 'info');
-          log(outputId, `Response Headers:`, 'info');
-
-          response.headers.forEach((value, key) => {
-            log(outputId, `  ${key}: ${value}`, 'info');
-          });
+          log(outputId, `${duration}ms`, 'info');
 
           const contentType = response.headers.get('content-type');
           let data;
@@ -290,16 +323,12 @@
             data = await response.json();
             log(
               outputId,
-              `Response Body: ${JSON.stringify(data, null, 2)}`,
+              `${JSON.stringify(data, null, 2)}`,
               response.ok ? 'success' : 'error',
             );
           } else {
             data = await response.text();
-            log(
-              outputId,
-              `Response Body: ${data}`,
-              response.ok ? 'success' : 'error',
-            );
+            log(outputId, `${data}`, response.ok ? 'success' : 'error');
           }
 
           return { success: response.ok, data, status: response.status };
@@ -307,32 +336,33 @@
           const endTime = performance.now();
           const duration = (endTime - startTime).toFixed(2);
 
-          log(outputId, `Request Failed after ${duration}ms`, 'error');
-          log(outputId, `Error: ${error.message}`, 'error');
-          log(outputId, `Stack Trace: ${error.stack}`, 'error');
+          log(outputId, `Failed after ${duration}ms`, 'error');
+          log(outputId, `${error.message}`, 'error');
 
           if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            log(
-              outputId,
-              `Network Error: Check if API is running at ${API_URL()}`,
-              'error',
-            );
-            log(outputId, `Troubleshooting:`, 'error');
-            log(
-              outputId,
-              `  1. Run 'docker-compose up -d' to start the service`,
-              'error',
-            );
-            log(
-              outputId,
-              `  2. Check 'docker-compose ps' to verify services are running`,
-              'error',
-            );
-            log(outputId, `  3. Verify the API URL is correct`, 'error');
+            log(outputId, `Check if API is running at ${API_URL()}`, 'error');
           }
 
           return { success: false, data: null, error };
         }
+      }
+
+      async function createWallet() {
+        const userId =
+          document.getElementById('createUserId').value || DEFAULT_USER_ID();
+        const idempotencyKey = document.getElementById(
+          'createIdempotencyKey',
+        ).value;
+
+        if (!userId || !idempotencyKey) {
+          log('createOutput', 'Missing: userId, idempotencyKey', 'error');
+          showDebug('create');
+          return;
+        }
+
+        const body = { userId, idempotencyKey };
+        showDebug('create');
+        await makeRequest('POST', '/wallet/create', body, 'createOutput');
       }
 
       async function topup() {
@@ -346,7 +376,7 @@
         if (!userId || !amount || !idempotencyKey) {
           log(
             'topupOutput',
-            'Missing required fields: userId, amount, idempotencyKey',
+            'Missing: userId, amount, idempotencyKey',
             'error',
           );
           showDebug('topup');
@@ -372,7 +402,7 @@
         if (!userId || !amount || !idempotencyKey) {
           log(
             'chargeOutput',
-            'Missing required fields: userId, amount, idempotencyKey',
+            'Missing: userId, amount, idempotencyKey',
             'error',
           );
           showDebug('charge');
@@ -391,7 +421,7 @@
           document.getElementById('balanceUserId').value || DEFAULT_USER_ID();
 
         if (!userId) {
-          log('balanceOutput', 'Missing required field: userId', 'error');
+          log('balanceOutput', 'Missing: userId', 'error');
           showDebug('balance');
           return;
         }
@@ -401,25 +431,17 @@
         await makeRequest('GET', endpoint, null, 'balanceOutput');
       }
 
-      function clearBalance() {
+      async function resetDb() {
+        if (!confirm('⚠️ This will delete ALL data. Continue?')) {
+          return;
+        }
+        clearLog('createOutput');
+        clearLog('topupOutput');
+        clearLog('chargeOutput');
         clearLog('balanceOutput');
+        showDebug('balance');
+        await makeRequest('POST', '/admin/db/reset', null, 'balanceOutput');
       }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('topupUserId').addEventListener('focus', () => {
-          if (!this.value) this.value = DEFAULT_USER_ID();
-        });
-        document
-          .getElementById('chargeUserId')
-          .addEventListener('focus', () => {
-            if (!this.value) this.value = DEFAULT_USER_ID();
-          });
-        document
-          .getElementById('balanceUserId')
-          .addEventListener('focus', () => {
-            if (!this.value) this.value = DEFAULT_USER_ID();
-          });
-      });
     </script>
   </body>
 </html>

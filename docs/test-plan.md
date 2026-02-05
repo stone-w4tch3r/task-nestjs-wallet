@@ -40,7 +40,17 @@ Follow the manual test steps below using curl commands.
 
 **Web UI Alternative**: Use the forms at http://localhost:3000 - each section corresponds to a test below.
 
-### 1.1 Create wallet via topup
+### 1.1 Create wallet explicitly
+
+```bash
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "test-user", "idempotencyKey": "create1"}'
+```
+
+**Expected:** `{"success":true,"userId":"test-user","balance":0}`
+
+### 1.2 Topup wallet
 
 ```bash
 curl -X POST http://localhost:3000/wallet/topup \
@@ -147,9 +157,17 @@ curl http://localhost:3000/wallet/balance?userId=nonexistent
 **Expected:** Error with `Wallet not found`
 
 ```bash
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "nonexistent", "amount": 100, "idempotencyKey": "test4"}'
+```
+
+**Expected:** Error with `Wallet not found`
+
+```bash
 curl -X POST http://localhost:3000/wallet/charge \
   -H "Content-Type: application/json" \
-  -d '{"userId": "nonexistent", "amount": 100, "idempotencyKey": "test4", "reason": "Test"}'
+  -d '{"userId": "nonexistent", "amount": 100, "idempotencyKey": "test5", "reason": "Test"}'
 ```
 
 **Expected:** Error with `Wallet not found`
@@ -375,6 +393,61 @@ curl http://localhost:3000/wallet/balance?userId=history-user | grep -o '"id"' |
 ```
 
 **Expected:** Balance = 150, transactions count = 10 (limit applied)
+
+---
+
+## Test 8: New Endpoints (1 minute)
+
+### 8.1 Create wallet endpoint
+
+```bash
+# Create new wallet
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "new-user", "idempotencyKey": "new-create"}'
+```
+
+**Expected:** `{"success":true,"userId":"new-user","balance":0}`
+
+### 8.2 Duplicate wallet creation (idempotency)
+
+```bash
+# Try to create same wallet again
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "new-user", "idempotencyKey": "new-create"}'
+```
+
+**Expected:** Success (idempotency) - same response as above
+
+### 8.3 Create already existing wallet
+
+```bash
+# Try to create with new idempotency key
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "new-user", "idempotencyKey": "new-create2"}'
+```
+
+**Expected:** Error with `Wallet already exists`
+
+### 8.4 Database reset
+
+```bash
+# Reset database (clears all tables)
+curl -X POST http://localhost:3000/admin/db/reset
+```
+
+**Expected:** `{"success":true}`
+
+**Verify:**
+
+```bash
+# All data should be cleared
+curl http://localhost:3000/wallet/balance?userId=test-user
+```
+
+**Expected:** Error with `Wallet not found`
 
 ---
 
