@@ -8,14 +8,14 @@ import {
 @Entity('wallets')
 export class Wallet {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  userId: string;
+  userId!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  balance: number;
+  balance!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -3,15 +3,15 @@ import { IsString, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
 export class ChargeDto {
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   @IsNumber()
   @IsNotEmpty()
-  amount: number;
+  amount!: number;
 
   @IsString()
   @IsNotEmpty()
-  idempotencyKey: string;
+  idempotencyKey!: string;
 
   @IsString()
   @IsOptional()

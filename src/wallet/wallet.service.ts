@@ -51,7 +51,9 @@ export class WalletService {
         });
       }
 
-      wallet.balance += dto.amount;
+      const currentBalance = Number(wallet.balance);
+      const newBalance = currentBalance + dto.amount;
+      wallet.balance = newBalance;
       await manager.save(wallet);
 
       const transaction = manager.create(Transaction, {
@@ -62,7 +64,7 @@ export class WalletService {
       });
       await manager.save(transaction);
 
-      const response = { success: true, newBalance: wallet.balance };
+      const response = { success: true, newBalance: Number(newBalance) };
 
       const idempotencyEntry = manager.create(IdempotencyLog, {
         key: dto.idempotencyKey,
@@ -130,8 +132,9 @@ export class WalletService {
         throw new BadRequestException('LIMIT_EXCEEDED');
       }
 
-      wallet.balance -= dto.amount;
-      dailyLimit.spent += dto.amount;
+      const newBalance = Number(wallet.balance) - dto.amount;
+      wallet.balance = newBalance;
+      dailyLimit.spent = Number(dailyLimit.spent) + dto.amount;
 
       await manager.save(wallet);
       await manager.save(dailyLimit);
@@ -145,7 +148,7 @@ export class WalletService {
       });
       await manager.save(transaction);
 
-      const response = { success: true, newBalance: wallet.balance };
+      const response = { success: true, newBalance };
 
       const idempotencyEntry = manager.create(IdempotencyLog, {
         key: dto.idempotencyKey,
@@ -176,7 +179,7 @@ export class WalletService {
 
     return {
       userId,
-      balance: wallet.balance,
+      balance: Number(wallet.balance),
       transactions,
     };
   }
