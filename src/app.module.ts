@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { WalletModule } from './wallet/wallet.module';
+import { WalletModule } from './wallet/wallet.module.js';
 import { join } from 'path';
 
 @Module({

@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Wallet } from './wallet.entity';
+import { Wallet } from './wallet.entity.js';
 
 export enum TransactionType {
   TOPUP = 'TOPUP',

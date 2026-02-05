@@ -6,9 +6,9 @@ import {
   Query,
   ValidationPipe,
 } from '@nestjs/common';
-import { WalletService } from './wallet.service';
-import { TopupDto } from './dto/topup.dto';
-import { ChargeDto } from './dto/charge.dto';
+import { WalletService } from './wallet.service.js';
+import { TopupDto } from './dto/topup.dto.js';
+import { ChargeDto } from './dto/charge.dto.js';
 
 @Controller('wallet')
 export class WalletController {

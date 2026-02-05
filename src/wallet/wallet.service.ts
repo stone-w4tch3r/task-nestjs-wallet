@@ -1,12 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Wallet } from '../entities/wallet.entity';
-import { DailyLimit } from '../entities/daily-limit.entity';
-import { Transaction, TransactionType } from '../entities/transaction.entity';
-import { IdempotencyLog } from '../entities/idempotency-log.entity';
-import { TopupDto } from './dto/topup.dto';
-import { ChargeDto } from './dto/charge.dto';
+import { Wallet } from '../entities/wallet.entity.js';
+import { DailyLimit } from '../entities/daily-limit.entity.js';
+import {
+  Transaction,
+  TransactionType,
+} from '../entities/transaction.entity.js';
+import { IdempotencyLog } from '../entities/idempotency-log.entity.js';
+import { TopupDto } from './dto/topup.dto.js';
+import { ChargeDto } from './dto/charge.dto.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const DAILY_LIMIT = 10000;
