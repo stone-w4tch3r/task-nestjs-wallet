@@ -29,3 +29,5 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/*
+# Git worktrees
+.worktrees
