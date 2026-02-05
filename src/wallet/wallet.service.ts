@@ -99,10 +99,8 @@ export class WalletService {
         throw new BadRequestException('Wallet not found');
       }
 
-      const currentBalance = Number(wallet.balance);
-      const newBalance = currentBalance + dto.amount;
+      const newBalance = wallet.balance + dto.amount;
       wallet.balance = newBalance;
-      await manager.save(wallet);
 
       const transaction = manager.create(Transaction, {
         id: uuidv4(),
@@ -112,7 +110,8 @@ export class WalletService {
       });
       await manager.save(transaction);
 
-      const response = { success: true, newBalance: Number(newBalance) };
+      const response = { success: true, newBalance };
+      await manager.save(wallet);
 
       const idempotencyEntry = manager.create(IdempotencyLog, {
         key: dto.idempotencyKey,
@@ -178,13 +177,13 @@ export class WalletService {
         throw new BadRequestException('INSUFFICIENT_FUNDS');
       }
 
-      if (Number(dailyLimit.spent) + dto.amount > DAILY_LIMIT) {
+      if (dailyLimit.spent + dto.amount > DAILY_LIMIT) {
         throw new BadRequestException('LIMIT_EXCEEDED');
       }
 
-      const newBalance = Number(wallet.balance) - dto.amount;
+      const newBalance = wallet.balance - dto.amount;
       wallet.balance = newBalance;
-      dailyLimit.spent = Number(dailyLimit.spent) + dto.amount;
+      dailyLimit.spent = dailyLimit.spent + dto.amount;
 
       await manager.save(wallet);
       await manager.save(dailyLimit);
@@ -229,7 +228,7 @@ export class WalletService {
 
     return {
       userId,
-      balance: Number(wallet.balance),
+      balance: wallet.balance,
       transactions,
     };
   }

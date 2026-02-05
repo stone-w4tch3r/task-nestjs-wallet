@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from 'typeorm';
 import { Wallet } from './wallet.entity.js';
+import { NumericColumnTransformer } from '../common/transformers/numeric-column.transformer.js';
 
 export enum TransactionType {
   TOPUP = 'TOPUP',
@@ -29,7 +30,12 @@ export class Transaction extends BaseEntity {
   @JoinColumn({ name: 'walletId' })
   wallet!: Wallet;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: new NumericColumnTransformer(),
+  })
   amount!: number;
 
   @Column({ nullable: true })
