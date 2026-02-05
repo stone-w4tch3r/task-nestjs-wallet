@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -7,21 +7,22 @@ const __dirname = dirname(__filename);
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
 import { AdminController } from './admin/admin.controller.js';
 import { AdminModule as AdminJsNestModule } from '@adminjs/nestjs';
-import { createAdminJS } from './admin/adminjs.config.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { Wallet } from './entities/wallet.entity.js';
+import { Transaction } from './entities/transaction.entity.js';
+import { DailyLimit } from './entities/daily-limit.entity.js';
+import { IdempotencyLog } from './entities/idempotency-log.entity.js';
+import { DataSource } from 'typeorm';
+import { Resource } from '@adminjs/typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, 'frontend'),
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -36,10 +37,30 @@ import { AppService } from './app.service.js';
     }),
     WalletModule,
     AdminJsNestModule.createAdminAsync({
-      imports: [WalletModule],
-      useFactory: () => {
+      imports: [TypeOrmModule],
+      inject: [DataSource],
+      useFactory: (dataSource: DataSource) => {
+        Wallet.useDataSource(dataSource);
+        Transaction.useDataSource(dataSource);
+        DailyLimit.useDataSource(dataSource);
+        IdempotencyLog.useDataSource(dataSource);
         return {
-          adminJsOptions: createAdminJS(),
+          adminJsOptions: {
+            rootPath: '/db-admin',
+            resources: [
+              new Resource(Wallet),
+              new Resource(Transaction),
+              new Resource(DailyLimit),
+              new Resource(IdempotencyLog),
+            ],
+            branding: {
+              companyName: 'Wallet Admin',
+              logo: '',
+              favicon: '',
+              softwareBrothers: false,
+              madeWithLove: false,
+            },
+          },
           sessionOptions: {
             resave: false,
             saveUninitialized: true,
@@ -49,7 +70,6 @@ import { AppService } from './app.service.js';
           },
         };
       },
-      inject: [],
     }),
   ],
   controllers: [AppController, AdminController],
