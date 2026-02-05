@@ -3,7 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 @Module({
   imports: [
@@ -26,5 +32,7 @@ import { join } from 'path';
     }),
     WalletModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
