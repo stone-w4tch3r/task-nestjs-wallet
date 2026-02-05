@@ -178,7 +178,7 @@ export class WalletService {
         throw new BadRequestException('INSUFFICIENT_FUNDS');
       }
 
-      if (dailyLimit.spent + dto.amount > DAILY_LIMIT) {
+      if (Number(dailyLimit.spent) + dto.amount > DAILY_LIMIT) {
         throw new BadRequestException('LIMIT_EXCEEDED');
       }
 
