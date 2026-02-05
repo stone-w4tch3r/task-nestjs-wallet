@@ -114,6 +114,31 @@ curl -X POST http://localhost:3000/wallet/charge \
 
 **Verify:** Balance should still be 800
 
+### 2.3 Idempotency with different amounts (critical edge case)
+
+```bash
+# First topup with 1000
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "idempotency-user", "amount": 1000, "idempotencyKey": "same-key"}'
+
+# Try same idempotency key but with different amount 5000
+# Should return CACHED response from first request, NOT process 5000
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "idempotency-user", "amount": 5000, "idempotencyKey": "same-key"}'
+```
+
+**Expected:** Second request returns `newBalance: 1000` (cached response from first request)
+
+**Verify:**
+
+```bash
+curl http://localhost:3000/wallet/balance?userId=idempotency-user
+```
+
+**Expected:** Balance is 1000 (NOT 6000 - 5000 was NOT processed)
+
 ---
 
 ## Test 3: Business Rules (2 minutes)
@@ -147,6 +172,59 @@ done
 ```
 
 **Expected:** Charges succeed until daily spent + amount > 10000, then `LIMIT_EXCEEDED`
+
+### 3.2.1 Single charge over daily limit (edge case)
+
+```bash
+# Setup user with 20000 balance
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "limit-edge-user", "amount": 20000, "idempotencyKey": "setup"}'
+
+# Try to charge 11000 in a single transaction (over daily limit)
+curl -X POST http://localhost:3000/wallet/charge \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "limit-edge-user", "amount": 11000, "idempotencyKey": "overlimit1", "reason": "Large purchase"}'
+```
+
+**Expected:** Error with `LIMIT_EXCEEDED`
+
+**Verify:**
+
+```bash
+curl http://localhost:3000/wallet/balance?userId=limit-edge-user
+```
+
+**Expected:** Balance should still be 20000 (no charge should have been processed)
+
+### 3.2.2 Boundary test - exactly at daily limit
+
+```bash
+# Setup user with 20000 balance
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "boundary-user", "amount": 20000, "idempotencyKey": "setup"}'
+
+# Charge exactly 10000 (should succeed)
+curl -X POST http://localhost:3000/wallet/charge \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "boundary-user", "amount": 10000, "idempotencyKey": "boundary1", "reason": "At limit"}'
+
+# Try to charge 1 more (should fail - already at limit)
+curl -X POST http://localhost:3000/wallet/charge \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "boundary-user", "amount": 1, "idempotencyKey": "boundary2", "reason": "Over limit"}'
+```
+
+**Expected:** First charge succeeds, second charge fails with `LIMIT_EXCEEDED`
+
+**Verify:**
+
+```bash
+curl http://localhost:3000/wallet/balance?userId=boundary-user
+```
+
+**Expected:** Balance should be 10000 (only first charge succeeded)
 
 ### 3.3 Non-existent wallet
 
@@ -282,6 +360,34 @@ curl -X POST http://localhost:3000/wallet/topup \
 ```
 
 **Expected:** 400 Bad Request / JSON parse error
+
+### 5.5 Decimal precision (floating point arithmetic)
+
+```bash
+# Create wallet and topup with fractional amounts
+curl -X POST http://localhost:3000/wallet/create \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "decimal-user", "idempotencyKey": "create-decimal"}'
+
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "decimal-user", "amount": 0.10, "idempotencyKey": "decimal1"}'
+
+curl -X POST http://localhost:3000/wallet/topup \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "decimal-user", "amount": 0.20, "idempotencyKey": "decimal2"}'
+
+curl -X POST http://localhost:3000/wallet/charge \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "decimal-user", "amount": 0.30, "idempotencyKey": "decimal3", "reason": "Test"}'
+
+# Check final balance - should be exactly 0.00
+curl http://localhost:3000/wallet/balance?userId=decimal-user
+```
+
+**Expected:** Balance is exactly 0.00 (0.10 + 0.20 - 0.30 = 0.00)
+
+**Critical:** If implementation uses floating point without proper precision handling, result might be `0.00000000000000004` or similar precision error
 
 ---
 

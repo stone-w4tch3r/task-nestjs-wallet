@@ -172,6 +172,8 @@ export class WalletService {
         }
       }
 
+      await manager.save(dailyLimit);
+
       if (wallet.balance < dto.amount) {
         throw new BadRequestException('INSUFFICIENT_FUNDS');
       }
