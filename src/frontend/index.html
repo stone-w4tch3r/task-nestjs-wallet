@@ -158,7 +158,10 @@
           title="Default User ID"
         />
       </div>
-      <button class="reset-btn" onclick="resetDb()">🔄 Reset All Data</button>
+      <div>
+        <button onclick="openDbAdmin()">🗄️ DB Admin</button>
+        <button class="reset-btn" onclick="resetDb()">🔄 Reset All Data</button>
+      </div>
     </div>
 
     <div class="grid">
@@ -441,6 +444,11 @@
         clearLog('balanceOutput');
         showDebug('balance');
         await makeRequest('POST', '/admin/db/reset', null, 'balanceOutput');
+      }
+
+      function openDbAdmin() {
+        const url = `${API_URL()}/db-admin`;
+        window.open(url, '_blank');
       }
     </script>
   </body>

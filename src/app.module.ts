@@ -9,7 +9,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
-import { AdminModule } from './admin/admin.module.js';
+import { AdminController } from './admin/admin.controller.js';
+import { AdminModule as AdminJsNestModule } from '@adminjs/nestjs';
+import { createAdminJS } from './admin/adminjs.config.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
@@ -33,9 +35,24 @@ import { AppService } from './app.service.js';
       logging: false,
     }),
     WalletModule,
-    AdminModule,
+    AdminJsNestModule.createAdminAsync({
+      imports: [WalletModule],
+      useFactory: () => {
+        return {
+          adminJsOptions: createAdminJS(),
+          sessionOptions: {
+            resave: false,
+            saveUninitialized: true,
+            secret:
+              process.env.ADMIN_COOKIE_SECRET ||
+              'admin-secret-key-change-in-production',
+          },
+        };
+      },
+      inject: [],
+    }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, AdminController],
   providers: [AppService],
 })
 export class AppModule {}

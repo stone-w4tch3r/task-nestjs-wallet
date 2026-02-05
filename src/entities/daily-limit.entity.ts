@@ -1,7 +1,8 @@
 import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import { BaseEntity } from 'typeorm';
 
 @Entity('daily_limits')
-export class DailyLimit {
+export class DailyLimit extends BaseEntity {
   @PrimaryColumn()
   userId!: string;
 

@@ -4,9 +4,10 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
+import { BaseEntity } from 'typeorm';
 
 @Entity('wallets')
-export class Wallet {
+export class Wallet extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 

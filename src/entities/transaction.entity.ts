@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { BaseEntity } from 'typeorm';
 import { Wallet } from './wallet.entity.js';
 
 export enum TransactionType {
@@ -14,7 +15,7 @@ export enum TransactionType {
 }
 
 @Entity('transactions')
-export class Transaction {
+export class Transaction extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
