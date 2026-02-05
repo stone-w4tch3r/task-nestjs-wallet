@@ -1,15 +1,14 @@
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { WalletModule } from './wallet/wallet.module.js';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 @Module({
   imports: [
@@ -32,7 +31,5 @@ const __dirname = dirname(__filename);
     }),
     WalletModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
