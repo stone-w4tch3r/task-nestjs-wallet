@@ -27,7 +27,7 @@ import { AppService } from './app.service.js';
       username: process.env.DB_USERNAME || 'wallet',
       password: process.env.DB_PASSWORD || 'wallet123',
       database: process.env.DB_DATABASE || 'wallet',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      entities: [__dirname + '/**/*.entity{.ts,.mjs}'],
       synchronize: true,
       logging: false,
     }),
